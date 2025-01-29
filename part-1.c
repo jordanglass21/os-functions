@@ -6,12 +6,13 @@
 /* THE ONLY INCLUDE FILE */
 #include "sysdefs.h"
 
+#define bufSize 200
 /* write these functions */
 
-int read(int fd, void *ptr, int len);
-int write(int fd, void *ptr, int len);
-void exit(int err);
-int getBufferSize(char *buffer); 
+// int read(int fd, void *ptr, int len);
+// int write(int fd, void *ptr, int len);
+// void exit(int err);
+
 /* ---------- */
 
 /* Factor, factor! Don't put all your code in main()! 
@@ -36,33 +37,20 @@ int write(int fd, void *ptr, int len) {
 
 int myPrint(void *buffer) {
 	int std_out = 1;
-	return write(std_out, buffer, getBufferSize(buffer));
+	return write(std_out, buffer, bufSize);
 }
-
 int myScan(char *buffer) {
 	int std_in = 0;
-	return read(std_in, buffer, getBufferSize(buffer));
+	return read(std_in, buffer, bufSize);
 }
 
 // helper functions
-int getBufferSize(char *buffer) {
-	int size = 0;
-	while(1) {
-		if(buffer[size] == '\0') {
-			break;
-		}
-		size ++;
-	}
-	return size;
-}
 /* ---------- */
 
 void main(void)
 {
-	char buffer_1 [] = "hello this is my buffer\n";
-	myPrint(buffer_1);
-	char buffer_2 [200];
-	myScan(buffer_2);
-	myPrint(buffer_2);
-	exit(0);
+	char buf [bufSize];
+	myScan(buf);
+	myPrint(buf);
+	exit(1);
 }
