@@ -52,5 +52,5 @@ void main(void)
 	char buf [bufSize];
 	myScan(buf);
 	myPrint(buf);
-	exit(1);
+	exit(0);
 }
