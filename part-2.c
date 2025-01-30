@@ -13,14 +13,41 @@ extern void *vector[];
 
 /* write these functions 
 */
-int read(int fd, void *ptr, int len);
-int write(int fd, void *ptr, int len);
-void exit(int err);
+int read(int fd, void *ptr, int len); // we did this in part 1?
+int write(int fd, void *ptr, int len); // we did this in part 1?
+void exit(int err); // we did this i part 1?
+
+// __NR_open
 int open(char *path, int flags);
+// __NR_close
 int close(int fd);
+// __NR_lseek
 int lseek(int fd, int offset, int flag);
+// __NR_mmap
 void *mmap(void *addr, int len, int prot, int flags, int fd, int offset);
+// __NR_munmap
 int munmap(void *addr, int len);
+
+
+int open(char *path, int flags) {
+	return syscall(__NR_open, path, flags);
+}
+
+int close(int fd) {
+	return syscall(__NR_close, fd); 
+}
+
+int lseek(int fd, int offset, int flag) {
+	return syscall(__NR_lseek, offset, flag);
+}
+
+//void *mmap(void *addr, int len, int prot, int flags, int fd, int offset) {
+	//return *syscall(__NR_mmap, addr, len, flags, fd, offset);
+//}
+
+int munmap(void *addr, int len) {
+	return syscall(__NR_munmap, addr, len);
+}
 
 /* ---------- */
 
@@ -31,8 +58,8 @@ int munmap(void *addr, int len);
  *  - use global variables for getarg
  */
 
-void do_readline(char *buf, int len);
-void do_print(char *buf);
+void do_readline(char *buf, int len); // we did this in part 1?
+void do_print(char *buf); // we did this in part 1?
 char *do_getarg(int i);         
 
 /* ---------- */
@@ -83,5 +110,6 @@ void main(void)
 	vector[2] = do_getarg;
 
 	/* YOUR CODE HERE */
+	exit(0);
 }
 
