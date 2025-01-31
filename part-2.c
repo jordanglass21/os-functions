@@ -62,9 +62,9 @@ int lseek(int fd, int offset, int flag) {
 	return syscall(__NR_lseek, offset, flag);
 }
 
-//void *mmap(void *addr, int len, int prot, int flags, int fd, int offset) {
-	//return *syscall(__NR_mmap, addr, len, flags, fd, offset);
-//}
+void *mmap(void *addr, int len, int prot, int flags, int fd, int offset) {
+	return (void *)syscall(__NR_mmap, addr, len, flags, fd, offset);
+}
 
 int munmap(void *addr, int len) {
 	return syscall(__NR_munmap, addr, len);
@@ -138,7 +138,36 @@ void do_print(char *buffer) {
  *   function call to hdr.e_entry
  *   munmap each mmap'ed region so we don't crash the 2nd time
  */
-
+void load_file(char *filename) {
+        int fd;
+        if((fd = open(filename, O_RDONLY)) < 0) {
+                char buf[] = "Unable to open file specified.";
+                do_print(buf);
+                return;
+        }
+        struct elf64_ehdr hdr;
+        read(fd, &hdr, sizeof(hdr));
+        int i, n = hdr.e_phnum;
+        struct elf64_phdr phdrs[n];
+        lseek(fd, hdr.e_phoff, SEEK_SET);
+        read(fd, phdrs, sizeof(phdrs));
+        for(i = 0; i < hdr.e_phnum; i++) {
+                if(phdrs[i].p_type == PT_LOAD) {
+                        int len = ROUND_UP(phdrs[i].p_memsz, 4096);
+                        void *region = mmap((void*)0x80000000, len, PROT_READ, MAP_PRIVATE, fd, (int)phdrs[i].p_offset);
+                        read(fd, region, (int)phdrs[i].p_filesz);
+                }
+        }
+        close(fd);
+        void (*f)();
+        f = hdr.e_entry+0x80000000;
+        f();
+        // void *oset = (void *) 0x80000000;
+        // for(int j = 0; i < mapRegions; j++) {
+        //         munmap(oset, 4096);
+        //         oset += 4096;
+        // }
+}
 /* your code here */
 /* Function that checks the start of the buffer for 'quit'.
  * return 1 if start of buffer is quit, telling main to break from loop and
@@ -195,7 +224,7 @@ int split(char **argv, int max_argc, char *line)
 void controller() {
 	do_print("Hello, this program simulates a shell");
 	do_print("The supported commands are wait, hello, ugrep and quit");
-	while(1) {
+	// while(1) {
 		// read a line of input
 		char buf[bufSize];
 		do_readline(buf, bufSize); 
@@ -205,13 +234,12 @@ void controller() {
 		int argc = split(argv, MAX_ARGS, buf);		
 
 		// exit if first word is quit
-		if(checkQuit(argv[0])){// if the first word is quit...
-                        break;
-                }
+		// if(checkQuit(argv[0])){// if the first word is quit...
+                //         break;
+                // }
 
 		// load the file named by the first word into memory
-		
-
+		load_file(argv[0]);
 		// provide "system call" for the loaded program
 
 		// call the loaded programs's entry point
@@ -219,7 +247,7 @@ void controller() {
        	 		do_print(argv[i]);// this should be load into the program
 		}
 		// repeat
-	}	
+	// }	
 }
 
 void main(void)
