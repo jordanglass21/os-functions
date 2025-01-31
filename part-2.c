@@ -11,6 +11,8 @@ extern void *vector[];
 // Quick little definition specifing the buffer size. +1 for \0.
 #define bufSize 201
 
+#define MAX_ARGS 5
+
 /* ---------- */
 
 /* write these functions 
@@ -194,12 +196,28 @@ void controller() {
 	do_print("Hello, this program simulates a shell");
 	do_print("The supported commands are wait, hello, ugrep and quit");
 	while(1) {
+		// read a line of input
 		char buf[bufSize];
-		do_readline(buf, bufSize);
-		if(checkQuit(buf)){
+		do_readline(buf, bufSize); 
+
+		// split it into words
+		char *argv[MAX_ARGS];
+		int argc = split(argv, MAX_ARGS, buf);		
+
+		// exit if first word is quit
+		if(checkQuit(argv[0])){// if the first word is quit...
                         break;
                 }
-       	 	do_print(buf);// this should be load in the program
+
+		// load file by the first named by the first word into memory
+
+		// provide "system call" for the loaded program
+
+		// call the loaded programs's entry point
+		for(int i = 0; i < argc; i++) {
+       	 		do_print(argv[i]);// this should be load in the program
+		}
+		// repeat
 	}	
 }
 
