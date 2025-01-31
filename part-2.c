@@ -209,13 +209,14 @@ void controller() {
                         break;
                 }
 
-		// load file by the first named by the first word into memory
+		// load the file named by the first word into memory
+		
 
 		// provide "system call" for the loaded program
 
 		// call the loaded programs's entry point
 		for(int i = 0; i < argc; i++) {
-       	 		do_print(argv[i]);// this should be load in the program
+       	 		do_print(argv[i]);// this should be load into the program
 		}
 		// repeat
 	}	
