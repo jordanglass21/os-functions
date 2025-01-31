@@ -138,7 +138,29 @@ void do_print(char *buffer) {
  */
 
 /* your code here */
+/* Function that checks the start of the buffer for 'quit'.
+ * return 1 if start of buffer is quit, telling main to break from loop and
+ *      exit
+ * return 0 otherwise
+ */
+int checkQuit(char* buffer) {
+        // some useful flag declarations.
+        int qflag=0, uflag=0, iflag=0, tflag=0, i = 0;
+        while(*buffer != '\0') {
+                /* check char at this position in buffer, if matches
+                 * set flag.
+                 */
+                if(*buffer == 'q' && i == 0){qflag = 1;}
+                if(*buffer == 'u' && i == 1){uflag = 1;}
+                if(*buffer == 'i' && i == 2){iflag = 1;}
+                if(*buffer == 't' && i == 3){tflag = 1;}
+		i++;
+		buffer++;
+        }
 
+        // all flags set? return 1, 0 otherwise
+        return qflag && uflag && iflag && tflag;
+}
 /* ---------- */
 
 /* simple function to split a line:
@@ -168,20 +190,27 @@ int split(char **argv, int max_argc, char *line)
 
 /* ---------- */
 
-void contoller() {
-	
+void controller() {
+	do_print("Hello, this program simulates a shell");
+	do_print("The supported commands are wait, hello, ugrep and quit");
+	while(1) {
+		char buf[bufSize];
+		do_readline(buf, bufSize);
+		if(checkQuit(buf)){
+                        break;
+                }
+       	 	do_print(buf);// this should be load in the program
+	}	
 }
 
 void main(void)
 {
+	//this was given to us, might be useful
 	//vector[0] = do_readline;
 	//vector[1] = do_print;
 	//vector[2] = do_getarg;
 
-	char buf [bufSize];	
-	do_readline(buf, bufSize);
-	do_print(buf);
-
+	controller();
 	/* YOUR CODE HERE */
 	exit(0);
 }

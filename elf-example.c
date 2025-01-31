@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 	/* read the main header (offset 0) */
 	struct elf64_ehdr hdr;
 	read(fd, &hdr, sizeof(hdr));
-	printf("entry point address: %p\n", hdr.e_entry);
+	printf("entry point address: %p\n", hdr.e_entry); // the info we need from the executable
 
 	/* read program headers (offset 'hdr.e_phoff') */
 	int i, n = hdr.e_phnum;

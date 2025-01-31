@@ -137,6 +137,7 @@ int checkQuit(char* buffer, int bytesRead) {
  * Write buffer to STDOUT.
  */
 void controller() {
+	//myPrint("Hello, type lines of input, or 'quit':", 45);
 	char buf [bufSize];
 	while(1) {
 		int bytesRead = myScan(buf, bufSize);
