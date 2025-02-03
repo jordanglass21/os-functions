@@ -151,14 +151,14 @@ void load_file(char *filename) {
         struct elf64_phdr phdrs[n];
         lseek(fd, hdr.e_phoff, SEEK_SET);
         read(fd, phdrs, sizeof(phdrs));
-        int offset = 0x80000000;
+        int offset = 0x8000000;
         void* mappedRegions[hdr.e_phnum];
         int mapped = 0;
         for(i = 0; i < hdr.e_phnum; i++) {
                 if(phdrs[i].p_type == PT_LOAD) {
                         int len = ROUND_UP(phdrs[i].p_memsz, 4096);
                         void *region = mmap(phdrs[i].p_vaddr + offset, len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-                        mappedRegions[mapped++] = region;
+			mappedRegions[mapped++] = region;
                         lseek(fd, (int)phdrs[i].p_offset, SEEK_SET);
                         read(fd, region, (int)phdrs[i].p_filesz);
                 }
@@ -256,9 +256,9 @@ void controller() {
 void main(void)
 {
 	//this was given to us, might be useful
-	//vector[0] = do_readline;
-	//vector[1] = do_print;
-	//vector[2] = do_getarg;
+	vector[0] = do_readline;
+	vector[1] = do_print;
+	vector[2] = do_getarg;
 
 	controller();
 	/* YOUR CODE HERE */
