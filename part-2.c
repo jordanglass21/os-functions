@@ -59,11 +59,11 @@ int close(int fd) {
 }
 
 int lseek(int fd, int offset, int flag) {
-	return syscall(__NR_lseek, offset, flag);
+	return syscall(__NR_lseek, fd, offset, flag);
 }
 
 void *mmap(void *addr, int len, int prot, int flags, int fd, int offset) {
-	return (void *)syscall(__NR_mmap, addr, len, flags, fd, offset);
+	return (void *)syscall(__NR_mmap, addr, len, prot, flags, fd, offset);
 }
 
 int munmap(void *addr, int len) {
@@ -151,22 +151,25 @@ void load_file(char *filename) {
         struct elf64_phdr phdrs[n];
         lseek(fd, hdr.e_phoff, SEEK_SET);
         read(fd, phdrs, sizeof(phdrs));
+        int offset = 0x80000000;
+        void* mappedRegions[hdr.e_phnum];
+        int mapped = 0;
         for(i = 0; i < hdr.e_phnum; i++) {
                 if(phdrs[i].p_type == PT_LOAD) {
                         int len = ROUND_UP(phdrs[i].p_memsz, 4096);
-                        void *region = mmap((void*)0x80000000, len, PROT_READ, MAP_PRIVATE, fd, (int)phdrs[i].p_offset);
+                        void *region = mmap(phdrs[i].p_vaddr + offset, len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+                        mappedRegions[mapped++] = region;
+                        lseek(fd, (int)phdrs[i].p_offset, SEEK_SET);
                         read(fd, region, (int)phdrs[i].p_filesz);
                 }
         }
         close(fd);
         void (*f)();
-        f = hdr.e_entry+0x80000000;
+        f = hdr.e_entry + offset;
         f();
-        // void *oset = (void *) 0x80000000;
-        // for(int j = 0; i < mapRegions; j++) {
-        //         munmap(oset, 4096);
-        //         oset += 4096;
-        // }
+        for(int j = 0; j < mapped; j++) {
+                munmap(mappedRegions[j], 4096);
+        }
 }
 /* your code here */
 /* Function that checks the start of the buffer for 'quit'.
