@@ -83,8 +83,6 @@ void do_readline(char *buf, int len) {
         /* Small buffer that holds the tiny string to be written to STDOUT
          * to differentiate between user input and echoed output.
          */
-        char carrot[2] = "> ";
-        write(1,carrot,2);
         // counter keeping track of how many bytes have been read.
         int idx = 0;
         // variable to store the byte read in and throw it into the buffer.
@@ -97,6 +95,7 @@ void do_readline(char *buf, int len) {
                  * otherwise append c to the buffer.
                  */
                 if(c == '\n') {
+                        buf[idx++] =  c;
                         break;
                 } else {
                         buf[idx++] =  c;
@@ -121,7 +120,7 @@ void do_print(char *buffer) {
                 // updating buffer pointer and bytes written.
                 buffer++;
         }
-	char newline = '\n';
+	char newline = '\0';
 	write(1, &newline, 1);
 }
 
@@ -157,8 +156,7 @@ char *do_getarg(int i) {
 void load_file(char *filename) {
         int fd;
         if((fd = open(filename, O_RDONLY)) < 0) {
-                char buf[] = "Unable to open file specified.";
-                do_print(buf);
+                do_print("Unable to open file specified.\n");
                 return;
         }
         struct elf64_ehdr hdr;
@@ -173,7 +171,18 @@ void load_file(char *filename) {
         for(i = 0; i < hdr.e_phnum; i++) {
                 if(phdrs[i].p_type == PT_LOAD) {
                         int len = ROUND_UP(phdrs[i].p_memsz, 4096);
-                        void *region = mmap(phdrs[i].p_vaddr + offset, len, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+                        uint64_t addr = ROUND_DOWN((uint64_t)(phdrs[i].p_vaddr), 4096);
+                        void *region = mmap(
+					(void *)addr+offset,
+					len,
+					PROT_READ | PROT_WRITE | PROT_EXEC,
+					MAP_PRIVATE | MAP_ANONYMOUS,
+					-1,
+					0);
+			if(region == MAP_FAILED) {
+				do_print("mmap failed\n");
+				exit(1);
+			}
 			mappedRegions[mapped++] = region;
                         lseek(fd, (int)phdrs[i].p_offset, SEEK_SET);
                         read(fd, region, (int)phdrs[i].p_filesz);
@@ -241,32 +250,33 @@ int split(char **argv, int max_argc, char *line)
 /* ---------- */
 
 void controller() {
-	do_print("Hello, this program simulates a shell");
-	do_print("The supported commands are wait, hello, ugrep and quit");
-	// while(1) {
+	do_print("Hello, this program simulates a shell\n");
+	do_print("The supported commands are wait, hello, ugrep and quit\n");
+	while(1) {
 		// read a line of input
 		char buf[bufSize];
+
+                write(1,"> ",2);
 		do_readline(buf, bufSize); 
 
 		// split it into words
-		char *argv[MAX_ARGS];
-		int argc = split(argv, MAX_ARGS, buf);		
+		split(p_argv, MAX_ARGS, buf);		
 
 		// exit if first word is quit
-		// if(checkQuit(argv[0])){// if the first word is quit...
-                //         break;
-                // }
+		if(checkQuit(p_argv[0])){// if the first word is quit...
+                	break;
+                }
 
 		// load the file named by the first word into memory
-		load_file(argv[0]);
+		load_file(p_argv[0]);
 		// provide "system call" for the loaded program
 
 		// call the loaded programs's entry point
-		for(int i = 0; i < argc; i++) {
-       	 		do_print(argv[i]);// this should be load into the program
-		}
+		// for(int i = 0; i < argc; i++) {
+       	 	// 	do_print(argv[i]);// load into the program
+		// }
 		// repeat
-	// }	
+	}	
 }
 
 void main(void)
