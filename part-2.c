@@ -85,6 +85,7 @@ void do_readline(char *buf, int len) {
         /* Small buffer that holds the tiny string to be written to STDOUT
          * to differentiate between user input and echoed output.
          */
+        write(1, "> ", 2);
         // counter keeping track of how many bytes have been read.
         int idx = 0;
         // variable to store the byte read in and throw it into the buffer.
@@ -243,8 +244,8 @@ int split(char **argv, int max_argc, char *line)
 /* ---------- */
 
 void controller() {
-	do_print("Hello, this program simulates a shell");
-	do_print("The supported commands are wait, hello, ugrep and quit");
+	do_print("Hello, this program simulates a shell\n");
+	do_print("The supported commands are wait, hello, ugrep and quit\n");
 	while(1) {
 		// read a line of input
 		char buf[bufSize];
