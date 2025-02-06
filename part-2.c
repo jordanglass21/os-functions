@@ -14,6 +14,8 @@ extern void *vector[];
 #define MAX_ARGS 10
 
 /* ---------- */
+int ARGC = -1;
+char *ARGV[MAX_ARGS];
 
 /* write these functions 
 */
@@ -126,22 +128,13 @@ void do_print(char *buffer) {
 
 // char *getarg(int i) - returns argument i, or 0 if there weren't that many arguments.
 char *do_getarg(int i) {
-        // read a line of input
-        char buf[bufSize];
-        do_readline(buf, bufSize);
-
-        // split it into words
-        char *argv[MAX_ARGS];
-        int argc = split(argv, MAX_ARGS, buf);
-	
-	// return 0 if i is not in bounds of args
-	if(argc <= i) {
-        	return 0;
+	// return the arument if i is in bounds
+	if(i >= 0 && i < ARGC) {
+        	return ARGV[i];
         }
 
-	// uncomment to verify result
-	//do_print(argv[i]);
-        return argv[i];
+	// else return 0
+        return 0;
 }
 /* ---------- */
 
@@ -250,31 +243,30 @@ int split(char **argv, int max_argc, char *line)
 /* ---------- */
 
 void controller() {
-	do_print("Hello, this program simulates a shell\n");
-	do_print("The supported commands are wait, hello, ugrep and quit\n");
+	do_print("Hello, this program simulates a shell");
+	do_print("The supported commands are wait, hello, ugrep and quit");
 	while(1) {
 		// read a line of input
 		char buf[bufSize];
 
-                write(1,"> ",2);
 		do_readline(buf, bufSize); 
 
 		// split it into words
-		split(p_argv, MAX_ARGS, buf);		
+		ARGC = split(ARGV, MAX_ARGS, buf);		
 
 		// exit if first word is quit
-		if(checkQuit(p_argv[0])){// if the first word is quit...
-                	break;
+		if(checkQuit(ARGV[0])){// if the first word is quit...
+			break;
                 }
 
 		// load the file named by the first word into memory
-		load_file(p_argv[0]);
+		load_file(do_getarg(0));
 		// provide "system call" for the loaded program
 
 		// call the loaded programs's entry point
-		// for(int i = 0; i < argc; i++) {
-       	 	// 	do_print(argv[i]);// load into the program
-		// }
+		//for(int i = 0; i < argc; i++) {
+       	 	//	do_print(argv[i]);// this should be load into the program
+		//}
 		// repeat
 	}	
 }
