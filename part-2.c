@@ -11,7 +11,7 @@ extern void *vector[];
 // Quick little definition specifing the buffer size. +1 for \0.
 #define bufSize 201
 
-#define MAX_ARGS 5
+#define MAX_ARGS 10
 
 /* ---------- */
 
@@ -20,6 +20,7 @@ extern void *vector[];
 int read(int fd, void *ptr, int len); // we did this in part 1?
 int write(int fd, void *ptr, int len); // we did this in part 1?
 void exit(int err); // we did this i part 1?
+int split(char **argv, int max_argc, char *line);
 
 // __NR_open
 int open(char *path, int flags);
@@ -34,7 +35,6 @@ int munmap(void *addr, int len);
 
 // Wrapper that calls the exit system call with the error number.
 //      syscall function found in syscall.S.
-//      __NR_exit 60 (system call number for exit).
 void exit(int err) {
         syscall(__NR_exit, err);
 }
@@ -125,9 +125,25 @@ void do_print(char *buffer) {
 	write(1, &newline, 1);
 }
 
-// they gave us this function signature, needs to be implemnted
-//char *do_getarg(int i);         
+// char *getarg(int i) - returns argument i, or 0 if there weren't that many arguments.
+char *do_getarg(int i) {
+        // read a line of input
+        char buf[bufSize];
+        do_readline(buf, bufSize);
 
+        // split it into words
+        char *argv[MAX_ARGS];
+        int argc = split(argv, MAX_ARGS, buf);
+	
+	// return 0 if i is not in bounds of args
+	if(argc <= i) {
+        	return 0;
+        }
+
+	// uncomment to verify result
+	//do_print(argv[i]);
+        return argv[i];
+}
 /* ---------- */
 
 /* the guts of part 2
@@ -255,13 +271,12 @@ void controller() {
 
 void main(void)
 {
-	//this was given to us, might be useful
 	vector[0] = do_readline;
 	vector[1] = do_print;
 	vector[2] = do_getarg;
 
 	controller();
-	/* YOUR CODE HERE */
+	
 	exit(0);
 }
 
