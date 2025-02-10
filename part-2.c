@@ -19,55 +19,114 @@ char *ARGV[MAX_ARGS];
 
 /* write these functions 
 */
+
 int read(int fd, void *ptr, int len); // we did this in part 1?
 int write(int fd, void *ptr, int len); // we did this in part 1?
 void exit(int err); // we did this i part 1?
+
 int split(char **argv, int max_argc, char *line);
 
-// __NR_open
 int open(char *path, int flags);
-// __NR_close
 int close(int fd);
-// __NR_lseek
 int lseek(int fd, int offset, int flag);
-// __NR_mmap
 void *mmap(void *addr, int len, int prot, int flags, int fd, int offset);
-// __NR_munmap
 int munmap(void *addr, int len);
 
-// Wrapper that calls the exit system call with the error number.
-//      syscall function found in syscall.S.
+/**
+ * Function wrapper for the exit system call.
+ * 
+ * Utiliizes __NR_exit, which is defined as system call number 60 for exit.
+ * 
+ * @param err Error code for exiting
+ */
 void exit(int err) {
         syscall(__NR_exit, err);
 }
-// Wrapper that calls the read system call with associated arguments.
-//      __NR_read 0 (system call number for read)
+/**
+ * Function wrapper for the read system call.
+ * 
+ * Utiliizes __NR_read, which is defined as system call number 0 for read.
+ * 
+ * @param fd    File descriptor to read data from.
+ * @param *ptr  Pointer to location where the data read from fd is stored
+ * @param len   Number of bytes of data to read
+ */
 int read(int fd, void *ptr, int len) {
         return syscall(__NR_read, fd, ptr, len);
 }
 
-// Wrapper that calls the write system call with associated arguments.
-//      __NR_write 1 (system call number)
+/**
+ * Function wrapper for the write system call.
+ * 
+ * Utiliizes __NR_write, which is defined as system call number 1 for write.
+ * 
+ * @param fd    File descriptor to write data to
+ * @param *ptr  Pointer to location where the data is read and written to fd
+ * @param len   Number of bytes of data to write
+ */
 int write(int fd, void *ptr, int len) {
         return syscall(__NR_write, fd, ptr, len);
 }
 
+/**
+ * Function wrapper for the open system call.
+ * 
+ * Utiliizes __NR_open, which is defined as system call number 2 for open.
+ * 
+ * @param *path         Path to the file to open.
+ * @param flags         Flags to determine permissions fo the file opened.
+ */
 int open(char *path, int flags) {
 	return syscall(__NR_open, path, flags);
 }
 
+/**
+ * Function wrapper for the close system call.
+ * 
+ * Utiliizes __NR_close, which is defined as system call number 3 for close.
+ * 
+ * @param fd    File descriptor to close.
+ */
 int close(int fd) {
 	return syscall(__NR_close, fd); 
 }
 
+/**
+ * Function wrapper for the lseek system call.
+ * 
+ * Utiliizes __NR_lseek, which is defined as system call number 8 for exit.
+ * 
+ * @param fd            File descriptor to operate on.        
+ * @param offset        The offset for the file in question.
+ * @param flag          Flags on how operate on the offset
+ *                              (SEEK_SET, SEEK_CUR, SEEK_END)
+ */
 int lseek(int fd, int offset, int flag) {
 	return syscall(__NR_lseek, fd, offset, flag);
 }
 
+/**
+ * Function wrapper for the mmap system call.
+ * Utiliizes __NR_mmap, which is defined as system call number 9 for mmap.
+ * 
+ * @param *addr         A hint for mmap on where to allocate the memory region
+ * @param len           How big is the memory region to be created
+ * @param prot          Permissions on the memory region (R/W/X)
+ * @param flags         How is the map created (MAP_PRIVATE/MAP_ANONYMOUS)
+ * @param fd            File descriptor to create the mapping from
+ * @param offset        Where in the file to start the mapping from
+ */
 void *mmap(void *addr, int len, int prot, int flags, int fd, int offset) {
 	return (void *)syscall(__NR_mmap, addr, len, prot, flags, fd, offset);
 }
 
+/**
+ * Function wrapper for the munmap system call.
+ * Utiliizes __NR_munmap, which is defined as system call number 11 for munmap.
+ * 
+ * @param *addr         Pointer to location where the memory is mapped to
+ * @param len           Size of the memory location to unmap
+ */
 int munmap(void *addr, int len) {
 	return syscall(__NR_munmap, addr, len);
 }
@@ -80,12 +139,17 @@ int munmap(void *addr, int len) {
  *  - stdin is file desc. 0, stdout is file descriptor 1
  *  - use global variables for getarg
  */
-// they gave us this function signature dont change it
+
+ /**
+  * Function that reads up to len-1 bytes into buf. It then adds a terminating zero byte at the end. 
+  * Stops reading into buf when either:
+  *     (a) the last character read was '\n'
+  *     (b) len-1 bytes were read
+  * 
+  * @param *buf         Pointer to buffer that data is to be read into
+  * @param len          Maximum bytes to read
+  */
 void do_readline(char *buf, int len) {
-        /* Small buffer that holds the tiny string to be written to STDOUT
-         * to differentiate between user input and echoed output.
-         */
-        write(1, "> ", 2);
         // counter keeping track of how many bytes have been read.
         int idx = 0;
         // variable to store the byte read in and throw it into the buffer.
@@ -108,26 +172,31 @@ void do_readline(char *buf, int len) {
         buf[idx] = '\0';
 }
 
-/* Function that takes in a char pointer to a buffer and a buffer size to
- * print to the designated file descriptor, hard coded as STDOUT.
- *
- * Processing the buffer byte by byte and sending it to STDOUT by calling
- * the write wrapper defined above.
- */
-// they gave us this function signature dont change
-void do_print(char *buffer) {
+ /**
+  * Writes the null-terminating string to standard output. 
+  * Going through each byte of buf and writing to STDOUT before stopping at the zero 
+  * byte that terminates the string.
+  * 
+  * @param *buf         Pointer to buffer that data is to be read from
+  *                             to print to STDOUT.
+  */
+void do_print(char *buf) {
         // loop to go through the entire buffer by byte.
-        while(*buffer != '\0') {
+        while(*buf != '\0') {
                 // writing a byte to STDOUT
-                write(1, buffer, 1);
+                write(1, buf, 1);
                 // updating buffer pointer and bytes written.
-                buffer++;
+                buf++;
         }
 	char newline = '\0';
 	write(1, &newline, 1);
 }
-
-// char *getarg(int i) - returns argument i, or 0 if there weren't that many arguments.
+/**
+ * Function that returns argument i, or 0 if there weren't that many arguments
+ * from a global argv variable
+ * 
+ * @param i the i-th index in the argv array to fetch an element from
+ */
 char *do_getarg(int i) {
 	// return the arument if i is in bounds
 	if(i >= 0 && i < ARGC) {
@@ -147,25 +216,52 @@ char *do_getarg(int i) {
  *   function call to hdr.e_entry
  *   munmap each mmap'ed region so we don't crash the 2nd time
  */
+
+ /**
+  * The guts of part 2
+  * 
+  * This is where we read in the elf header if valid file found.
+  *     Then we loop through the sections, if the section type is PT_LOAD:
+  *     We create a mmap region and read from the file into this region
+  *     Then we create a function pointer to hdr.e_entry and call it
+  *     munmap the mmap'ed memory regions after exiting to prevent crashing 
+  *     via out command loop the second iteration through.
+  * 
+  * @param *filename    The file that we want to open, load into memory
+  *                             and execute.
+  */
 void load_file(char *filename) {
         int fd;
+        // Trying to open file, printing error and returning if file not found
         if((fd = open(filename, O_RDONLY)) < 0) {
                 do_print("Unable to open file specified.\n");
                 return;
         }
         struct elf64_ehdr hdr;
+        // reading elf header into struct above
         read(fd, &hdr, sizeof(hdr));
         int i, n = hdr.e_phnum;
         struct elf64_phdr phdrs[n];
+        // seeking executable for pgrm hdrs via offset found in elf header.
         lseek(fd, hdr.e_phoff, SEEK_SET);
+        // read pgrm headers into struct phdrs[n]
         read(fd, phdrs, sizeof(phdrs));
+        // Defining a valid offset
         int offset = 0x8000000;
+        // Array that stores the mapped region pointers so that we can munmap
         void* mappedRegions[hdr.e_phnum];
+        // Counter for how many regions we have mapped
         int mapped = 0;
         for(i = 0; i < hdr.e_phnum; i++) {
+                // Is program header type of PT_LOAD
                 if(phdrs[i].p_type == PT_LOAD) {
+                        /* Round up the memory size to the nearest multiple
+                                of 4096 for paging*/
                         int len = ROUND_UP(phdrs[i].p_memsz, 4096);
+                        /* Rounding down vaddr so that start of mmap hint
+                                matches page size multiples*/
                         uint64_t addr = ROUND_DOWN((uint64_t)(phdrs[i].p_vaddr), 4096);
+                        // Region created by mmap located at addr + offset
                         void *region = mmap(
 					(void *)addr+offset,
 					len,
@@ -173,28 +269,43 @@ void load_file(char *filename) {
 					MAP_PRIVATE | MAP_ANONYMOUS,
 					-1,
 					0);
+                        /* Did the map fail? Handling if it did by printing
+                                mmap failed and exiting with error code 1.*/
 			if(region == MAP_FAILED) {
 				do_print("mmap failed\n");
 				exit(1);
 			}
+                        /* It didn't fail. Yay! Throw it in array to keep track
+                                for munmap*/
 			mappedRegions[mapped++] = region;
+                        // Seek to the phdr location in the elf file
                         lseek(fd, (int)phdrs[i].p_offset, SEEK_SET);
+                        /* Read the information from the elf file into
+                                mmap'ed region */
                         read(fd, region, (int)phdrs[i].p_filesz);
                 }
         }
+        // close the fd
         close(fd);
+        // create the function call to the entry point
         void (*f)();
         f = hdr.e_entry + offset;
+        // call the entry point!
         f();
+        // unmap the mapped regions.
         for(int j = 0; j < mapped; j++) {
                 munmap(mappedRegions[j], 4096);
         }
 }
 /* your code here */
-/* Function that checks the start of the buffer for 'quit'.
+
+/** 
+ * Function that checks the start of the buffer for 'quit'.
  * return 1 if start of buffer is quit, telling main to break from loop and
  *      exit
  * return 0 otherwise
+ * 
+ * @param *buffer       User entered buffer to see if 'quit' is entered
  */
 int checkQuit(char* buffer) {
         // some useful flag declarations.
@@ -223,7 +334,6 @@ int checkQuit(char* buffer) {
  *   int argc = split(argv, 10, buffer);
  *   ... pointers to words are in argv[0], ... argv[argc-1]
  */
-// they gave us this function dont change
 int split(char **argv, int max_argc, char *line)
 {
 	int i = 0;
@@ -242,14 +352,20 @@ int split(char **argv, int max_argc, char *line)
 }
 
 /* ---------- */
-
+/**
+ * Function that handles the command loop
+ */
 void controller() {
 	do_print("Hello, this program simulates a shell\n");
 	do_print("The supported commands are wait, hello, ugrep and quit\n");
 	while(1) {
-		// read a line of input
-		char buf[bufSize];
-
+                char buf[bufSize];
+                /* Small buffer that holds the tiny string to be written to STDOUT
+                * to differentiate between user input and echoed output.
+                */
+                write(1, "> ", 2);
+                
+                // read a line of input
 		do_readline(buf, bufSize); 
 
 		// split it into words
@@ -260,9 +376,8 @@ void controller() {
 			break;
                 }
 
-		// load the file named by the first word into memory
+		// load and execute the file named by the first word into memory
 		load_file(do_getarg(0));
-		// provide "system call" for the loaded program
 
 		// call the loaded programs's entry point
 		//for(int i = 0; i < argc; i++) {
@@ -272,6 +387,11 @@ void controller() {
 	}	
 }
 
+/**
+ * Entry point of this program. Holds important vector table declarations
+ *              and jumpstarts the command loop
+ * Calls exit when the command loop breaks from user input
+ */
 void main(void)
 {
 	vector[0] = do_readline;
