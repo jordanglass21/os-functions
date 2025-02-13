@@ -7,16 +7,6 @@
 #include "elf64.h"
 #include "sysdefs.h"
 
-char STACK1 [4096];
-char STACK2 [4096];
-void* STACK1_PTR = NULL;
-void* STACK2_PTR = NULL;
-void* MAIN_PTR = NULL;
-
-extern void *vector[];
-extern void switch_to(void **location_for_old_sp, void *new_value);
-extern void *setup_stack0(void *_stack, void *func);
-
 /* ---------- */
 
 /* write these 
@@ -31,6 +21,9 @@ void *mmap(void *addr, int len, int prot, int flags, int fd, int offset);
 int munmap(void *addr, int len);
 
 /* ---------- */
+
+                                                                                                                            extern void *vector[];                                                                                                      extern void switch_to(void **location_for_old_sp, void *new_value);                                                         extern void *setup_stack0(void *_stack, void *func);
+
 
 /**
  * Function wrapper for the read system call.
@@ -222,6 +215,10 @@ void do_print(char *buf) {
 
 /* ---------- */
 
+void *STACK1 = NULL;
+void *STACK2 = NULL;
+void *STACK1_PTR = NULL;                                                                                                    void *STACK2_PTR = NULL;                                                                                                    void *MAIN_PTR = NULL;
+
 /* write these new functions */
 void do_yield12(void);
 void do_yield21(void);
@@ -240,17 +237,22 @@ void do_uexit(void) {
 
 /* ---------- */
 
+void controller() {
+        STACK1 = mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	STACK2 = mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	STACK1_PTR = setup_stack0(STACK1+4096, load_file("process1", 0x800000));
+	STACK2_PTR = setup_stack0(STACK2+4096, load_file("process2", 0x805000));
+        switch_to(&MAIN_PTR, STACK1_PTR);
+}
+
 void main(void)
 {
 	vector[1] = do_print;
-
 	vector[3] = do_yield12;
 	vector[4] = do_yield21;
 	vector[5] = do_uexit;
-
-	STACK1_PTR = setup_stack0(STACK1+4096, load_file("process1", 0x800000));
-	STACK2_PTR = setup_stack0(STACK2+4096, load_file("process2", 0x900000));       
-	switch_to(&MAIN_PTR, STACK1_PTR); 	
+	
+	controller();
 
 	do_print("done\n");
 	exit(0);
