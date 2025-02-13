@@ -7,6 +7,12 @@
 #include "elf64.h"
 #include "sysdefs.h"
 
+char STACK1 [4096];
+char STACK2 [4096];
+void* STACK1_PTR = NULL;
+void* STACK2_PTR = NULL;
+void* MAIN_PTR = NULL;
+
 extern void *vector[];
 extern void switch_to(void **location_for_old_sp, void *new_value);
 extern void *setup_stack0(void *_stack, void *func);
@@ -161,12 +167,12 @@ void do_print(char *buf) {
   * @param offset       The offset that we specify as to where to load
   *                             the programs
   */
- void load_file(char *filename, int offset) {
+ void* load_file(char *filename, int offset) {
         int fd;
         // Trying to open file, printing error and returning if file not found
         if((fd = open(filename, O_RDONLY)) < 0) {
                 do_print("Unable to open file specified.\n");
-                return;
+                return NULL;
         }
         struct elf64_ehdr hdr;
         // reading elf header into struct above
@@ -177,10 +183,7 @@ void do_print(char *buf) {
         lseek(fd, hdr.e_phoff, SEEK_SET);
         // read pgrm headers into struct phdrs[n]
         read(fd, phdrs, sizeof(phdrs));
-        // Array that stores the mapped region pointers so that we can munmap
-        void* mappedRegions[hdr.e_phnum];
         // Counter for how many regions we have mapped
-        int mapped = 0;
         for(i = 0; i < hdr.e_phnum; i++) {
                 // Is program header type of PT_LOAD
                 if(phdrs[i].p_type == PT_LOAD) {
@@ -204,9 +207,6 @@ void do_print(char *buf) {
 				do_print("mmap failed\n");
 				exit(1);
 			}
-                        /* It didn't fail. Yay! Throw it in array to keep track
-                                for munmap*/
-			mappedRegions[mapped++] = region;
                         // Seek to the phdr location in the elf file
                         lseek(fd, (int)phdrs[i].p_offset, SEEK_SET);
                         /* Read the information from the elf file into
@@ -228,14 +228,14 @@ void do_yield21(void);
 void do_uexit(void);
 
 void do_yield12(void) {
-
+	do_print("yield");
 }
 void do_yield21(void) {
-
+	do_print("yield");
 }
 
 void do_uexit(void) {
-
+	do_print("exit");
 }
 
 /* ---------- */
@@ -248,8 +248,10 @@ void main(void)
 	vector[4] = do_yield21;
 	vector[5] = do_uexit;
 
-	/* your code here */
-        
+	STACK1_PTR = setup_stack0(STACK1+4096, load_file("process1", 800000));
+	STACK2_PTR = setup_stack0(STACK2+4096, load_file("process2", 900000));       
+	switch_to(&MAIN_PTR, STACK1_PTR); 	
+
 	do_print("done\n");
 	exit(0);
 }
