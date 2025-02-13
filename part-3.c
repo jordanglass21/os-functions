@@ -228,14 +228,14 @@ void do_yield21(void);
 void do_uexit(void);
 
 void do_yield12(void) {
-	do_print("yield");
+	switch_to(&STACK1_PTR, STACK2_PTR);
 }
 void do_yield21(void) {
-	do_print("yield");
+	switch_to(&STACK2_PTR, STACK1_PTR);
 }
 
 void do_uexit(void) {
-	do_print("exit");
+	switch_to(NULL, MAIN_PTR);
 }
 
 /* ---------- */
@@ -248,8 +248,8 @@ void main(void)
 	vector[4] = do_yield21;
 	vector[5] = do_uexit;
 
-	STACK1_PTR = setup_stack0(STACK1+4096, load_file("process1", 800000));
-	STACK2_PTR = setup_stack0(STACK2+4096, load_file("process2", 900000));       
+	STACK1_PTR = setup_stack0(STACK1+4096, load_file("process1", 0x800000));
+	STACK2_PTR = setup_stack0(STACK2+4096, load_file("process2", 0x900000));       
 	switch_to(&MAIN_PTR, STACK1_PTR); 	
 
 	do_print("done\n");
