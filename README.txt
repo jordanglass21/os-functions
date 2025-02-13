@@ -1,0 +1,21 @@
+Part 1:
+	Files updated/created:
+		- part-1.c
+	Files referenced:
+		- syscall.S
+		- sysdefs.h
+Part 2:
+	Files updated/created:
+		- part-2.c
+	Files referenced:
+		- hello.c
+		- wait.c
+		- ugrep.c
+		- sysdefs.h
+		- elf-example.c
+		- vector.S
+Part 3:
+	Files updated/created:
+		- part-3.c
+	Files referenced:
+		-

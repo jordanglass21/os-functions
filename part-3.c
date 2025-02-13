@@ -148,6 +148,78 @@ void do_print(char *buf) {
         write(1, &newline, 1);
 }
 
+ /**
+  * The guts of part 2
+  * 
+  * This is where we read in the elf header if valid file found.
+  *     Then we loop through the sections, if the section type is PT_LOAD:
+  *     We create a mmap region and read from the file into this region
+  *     We add the offset to the entry point return the pointer
+  * 
+  * @param *filename    The file that we want to open, load into memory
+  *                             and execute.
+  * @param offset       The offset that we specify as to where to load
+  *                             the programs
+  */
+ void load_file(char *filename, int offset) {
+        int fd;
+        // Trying to open file, printing error and returning if file not found
+        if((fd = open(filename, O_RDONLY)) < 0) {
+                do_print("Unable to open file specified.\n");
+                return;
+        }
+        struct elf64_ehdr hdr;
+        // reading elf header into struct above
+        read(fd, &hdr, sizeof(hdr));
+        int i, n = hdr.e_phnum;
+        struct elf64_phdr phdrs[n];
+        // seeking executable for pgrm hdrs via offset found in elf header.
+        lseek(fd, hdr.e_phoff, SEEK_SET);
+        // read pgrm headers into struct phdrs[n]
+        read(fd, phdrs, sizeof(phdrs));
+        // Array that stores the mapped region pointers so that we can munmap
+        void* mappedRegions[hdr.e_phnum];
+        // Counter for how many regions we have mapped
+        int mapped = 0;
+        for(i = 0; i < hdr.e_phnum; i++) {
+                // Is program header type of PT_LOAD
+                if(phdrs[i].p_type == PT_LOAD) {
+                        /* Round up the memory size to the nearest multiple
+                                of 4096 for paging*/
+                        int len = ROUND_UP(phdrs[i].p_memsz, 4096);
+                        /* Rounding down vaddr so that start of mmap hint
+                                matches page size multiples*/
+                        uint64_t addr = ROUND_DOWN((uint64_t)(phdrs[i].p_vaddr), 4096);
+                        // Region created by mmap located at addr + offset
+                        void *region = mmap(
+					(void *)addr+offset,
+					len,
+					PROT_READ | PROT_WRITE | PROT_EXEC,
+					MAP_PRIVATE | MAP_ANONYMOUS,
+					-1,
+					0);
+                        /* Did the map fail? Handling if it did by printing
+                                mmap failed and exiting with error code 1.*/
+			if(region == MAP_FAILED) {
+				do_print("mmap failed\n");
+				exit(1);
+			}
+                        /* It didn't fail. Yay! Throw it in array to keep track
+                                for munmap*/
+			mappedRegions[mapped++] = region;
+                        // Seek to the phdr location in the elf file
+                        lseek(fd, (int)phdrs[i].p_offset, SEEK_SET);
+                        /* Read the information from the elf file into
+                                mmap'ed region */
+                        read(fd, region, (int)phdrs[i].p_filesz);
+                }
+        }
+        // close the fd
+        close(fd);
+        // create the function call to the entry point
+        return hdr.e_entry + offset;
+}
+
 /* ---------- */
 
 /* write these new functions */
@@ -177,7 +249,7 @@ void main(void)
 	vector[5] = do_uexit;
 
 	/* your code here */
-
+        
 	do_print("done\n");
 	exit(0);
 }
