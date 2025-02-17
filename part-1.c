@@ -9,10 +9,6 @@
 // Quick little definition specifing the buffer size. +1 for \0.
 #define bufSize 201
 
-/* write these functions */
-// int read(int fd, void *ptr, int len);
-// int write(int fd, void *ptr, int len);
-// void exit(int err);
 
 /* ---------- */
 
@@ -150,7 +146,10 @@ void controller() {
 }
 
 /* ----- Main Function ----- */
-
+/**
+ * Entry point of this program, jumpstarts the command loop
+ * Calls exit when the command loop breaks from user input
+ */
 void main(void)
 {
 	controller();

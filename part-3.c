@@ -7,22 +7,9 @@
 #include "elf64.h"
 #include "sysdefs.h"
 
-/* ---------- */
-
-/* write these 
-*/
-int read(int fd, void *ptr, int len);
-int write(int fd, void *ptr, int len);
-void exit(int err);
-int open(char *path, int flags);
-int close(int fd);
-int lseek(int fd, int offset, int flag);
-void *mmap(void *addr, int len, int prot, int flags, int fd, int offset);
-int munmap(void *addr, int len);
-
-/* ---------- */
-
-                                                                                                                            extern void *vector[];                                                                                                      extern void switch_to(void **location_for_old_sp, void *new_value);                                                         extern void *setup_stack0(void *_stack, void *func);
+extern void *vector[];
+extern void switch_to(void **location_for_old_sp, void *new_value);
+extern void *setup_stack0(void *_stack, void *func);
 
 
 /**
@@ -199,7 +186,7 @@ void do_print(char *buf) {
 			if(region == MAP_FAILED) {
 				do_print("mmap failed\n");
 				exit(1);
-			}
+			} 
                         // Seek to the phdr location in the elf file
                         lseek(fd, (int)phdrs[i].p_offset, SEEK_SET);
                         /* Read the information from the elf file into
@@ -214,29 +201,44 @@ void do_print(char *buf) {
 }
 
 /* ---------- */
-
+/* Global variables used for context switching */
 void *STACK1 = NULL;
 void *STACK2 = NULL;
-void *STACK1_PTR = NULL;                                                                                                    void *STACK2_PTR = NULL;                                                                                                    void *MAIN_PTR = NULL;
+void *STACK1_PTR = NULL;
+void *STACK2_PTR = NULL;
+void *MAIN_PTR = NULL;
 
-/* write these new functions */
-void do_yield12(void);
-void do_yield21(void);
-void do_uexit(void);
-
+/**
+ * Function that calls the switch_to function that switches the execution
+ * stack from one process to another. From process 1 to process 2
+ */
 void do_yield12(void) {
 	switch_to(&STACK1_PTR, STACK2_PTR);
 }
+/**
+ * Function that calls the switch_to function that switches the execution
+ * stack from one process to another. From process 2 to process 1
+ */
 void do_yield21(void) {
 	switch_to(&STACK2_PTR, STACK1_PTR);
 }
-
+/**
+ * Function that is called by a process. "exiting" the process.
+ * Switches the execution stack back to the "OS" stack, or in
+ * this case, the part-3.c stack.
+ */
 void do_uexit(void) {
 	switch_to(NULL, MAIN_PTR);
 }
 
 /* ---------- */
 
+/**
+ * Controller function such that we don't throw everything in main.
+ * 
+ * Memory allocation with mmap, setting up the stack for the two processes
+ * through load_file() and jump starting process 1 happens here
+ */
 void controller() {
         STACK1 = mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	STACK2 = mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -245,6 +247,11 @@ void controller() {
         switch_to(&MAIN_PTR, STACK1_PTR);
 }
 
+/**
+ * Entry point of this program. Holds important vector table declarations
+ *              and jumpstarts the command loop
+ * Prints "done" and Calls exit when the command loop breaks from user input
+ */
 void main(void)
 {
 	vector[1] = do_print;

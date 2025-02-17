@@ -17,20 +17,6 @@ extern void *vector[];
 int ARGC = -1;
 char *ARGV[MAX_ARGS];
 
-/* write these functions 
-*/
-
-int read(int fd, void *ptr, int len); // we did this in part 1?
-int write(int fd, void *ptr, int len); // we did this in part 1?
-void exit(int err); // we did this i part 1?
-
-int split(char **argv, int max_argc, char *line);
-
-int open(char *path, int flags);
-int close(int fd);
-int lseek(int fd, int offset, int flag);
-void *mmap(void *addr, int len, int prot, int flags, int fd, int offset);
-int munmap(void *addr, int len);
 
 /**
  * Function wrapper for the exit system call.
@@ -359,6 +345,7 @@ void controller() {
 	do_print("Hello, this program simulates a shell\n");
 	do_print("The supported commands are wait, hello, ugrep and quit\n");
 	while(1) {
+                // buffer that is to be read from/written to.
                 char buf[bufSize];
                 /* Small buffer that holds the tiny string to be written to STDOUT
                 * to differentiate between user input and echoed output.
@@ -379,11 +366,6 @@ void controller() {
 		// load and execute the file named by the first word into memory
 		load_file(do_getarg(0));
 
-		// call the loaded programs's entry point
-		//for(int i = 0; i < argc; i++) {
-       	 	//	do_print(argv[i]);// this should be load into the program
-		//}
-		// repeat
 	}	
 }
 
